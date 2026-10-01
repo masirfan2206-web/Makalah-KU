@@ -3,77 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Makalah KU - Generator Makalah AI</title>
+    <title>Makalah KU - Pembuat & Asisten Makalah Otomatis</title>
+    
+    <!-- Meta Tag PWA & Mobile Header -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <!-- Tailwind CSS, Lucide Icons, & Supabase SDK -->
+    <!-- Tailwind CSS & Lucide Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Export Libraries (PDF & Word) -->
+    <!-- Library Ekspor Word (.docx) & PDF -->
     <script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
+        /* Format Kertas A4 Standar Akademis */
         .paper-a4 {
             width: 100%;
             max-width: 210mm;
             min-height: 297mm;
-            padding: 25mm 20mm 20mm 25mm;
+            padding: 20mm 15mm 20mm 20mm;
             background: white;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             font-family: 'Times New Roman', Times, serif;
-            color: #111827;
-            line-height: 1.6;
         }
-        .academic-content h1 { font-size: 16pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 24pt; margin-bottom: 12pt; }
-        .academic-content h2 { font-size: 14pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-top: 18pt; margin-bottom: 10pt; }
-        .academic-content h3 { font-size: 12pt; font-weight: bold; margin-top: 14pt; margin-bottom: 6pt; text-align: left; }
-        .academic-content p { font-size: 12pt; text-align: justify; text-indent: 36pt; margin-bottom: 8pt; }
-        .academic-content ul, .academic-content ol { font-size: 12pt; margin-left: 24pt; margin-bottom: 8pt; text-align: justify; }
-        .academic-content li { margin-bottom: 4pt; }
-        .no-indent { text-indent: 0 !important; }
-
         @media (max-width: 768px) {
-            .paper-a4 { padding: 18px; min-height: auto; }
-            .academic-content p { text-indent: 20pt; }
+            .paper-a4 { 
+                padding: 15px; 
+                min-height: auto; 
+            }
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen">
+<body class="bg-slate-100 text-slate-800 font-sans antialiased pb-12">
 
     <!-- Header Navbar -->
     <header class="bg-blue-600 text-white p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <i data-lucide="book-open" class="w-7 h-7"></i>
-                <div>
-                    <h1 class="text-base font-bold tracking-wide">Makalah KU</h1>
-                    <p class="text-[10px] text-blue-200" id="userDisplayName">Mode Pengembang (Fokus Fitur)</p>
-                </div>
-            </div>
-            
             <div class="flex items-center gap-2">
-                <span class="px-3 py-1 bg-blue-500/50 rounded-lg text-xs font-medium">Bebas Akses (Pengujian)</span>
+                <i data-lucide="book-open" class="w-6 h-6"></i>
+                <h1 class="text-xl font-bold tracking-wide">Makalah KU</h1>
             </div>
+            <span class="text-xs bg-blue-700 px-2.5 py-1 rounded-full font-medium">Smart AI Co-Pilot (Mode Pengembang)</span>
         </div>
     </header>
 
-    <!-- Area Utama Pembuat Makalah -->
+    <!-- Main Container -->
     <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- PANEL KIRI: FORM PARAMETER MAKALAH & CHAT REVISI -->
+        <!-- KIRI: Form Input & Chat Assistant -->
         <section class="lg:col-span-5 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 h-fit space-y-4">
             <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <i data-lucide="sliders" class="w-5 h-5 text-blue-600"></i> Parameter Makalah
+                <i data-lucide="sliders" class="w-5 h-5 text-blue-600"></i>
+                Pengaturan Makalah
             </h2>
 
             <form id="makalahForm" onsubmit="generateMakalahWithAI(event)" class="space-y-4">
+                
+                <!-- Pilihan Mode Input -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Mode Penyusunan</label>
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" onclick="switchMode('custom')" id="btnModeCustom" class="py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1">
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Topik / Judul Bebas
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Judul Bebas
                         </button>
                         <button type="button" onclick="switchMode('rps')" id="btnModeRPS" class="py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1">
                             <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Tempel RPS / Silabus
@@ -81,93 +75,120 @@
                     </div>
                 </div>
 
+                <!-- Input Judul Bebas -->
                 <div id="areaJudulCustom">
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Judul / Topik Pembahasan</label>
-                    <textarea id="judul" rows="2" placeholder="Contoh: Analisis Hukum Mahram dalam Perkawinan Islam" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Judul / Topik Makalah</label>
+                    <textarea id="judul" rows="2" placeholder="Contoh: Dasar Hukum Mahram dalam Perkawinan Islam"
+                        class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
                 </div>
 
+                <!-- Input Tempel RPS / Silabus -->
                 <div id="areaInputRPS" class="hidden">
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tempel Materi RPS / Silabus</label>
-                    <textarea id="rawRps" rows="3" placeholder="Contoh: Pertemuan 4 - Konsep Mahram: Definisi, Macam-macam Mahram, serta Implikasi Hukum..." class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tempelkan Teks RPS / Indikator Pertemuan</label>
+                    <textarea id="rawRps" rows="3" placeholder="Contoh: Pertemuan 3 - Dasar hukum mahram, Wanita yang haram dinikahi, Mahram mu'abbad & mu'aqqat..."
+                        class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
                 </div>
 
+                <!-- Metadata Kampus -->
                 <div class="space-y-3 pt-2 border-t border-slate-200">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase">Identitas Sampul & Akademis</h3>
-                    <input type="text" id="matkul" placeholder="Mata Kuliah (Contoh: Hukum Perkawinan Islam)" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm">
-                    <input type="text" id="dosen" placeholder="Dosen Pengampu (Contoh: Dr. H. Ahmad, M.Ag.)" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm">
-                    <input type="text" id="penyusun" placeholder="Penyusun (Contoh: Irfan Sohib - NIM 220101001)" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm">
-                    <input type="text" id="institusi" placeholder="Prodi / Fakultas / Institusi / Tahun" class="w-full p-2.5 border border-slate-300 rounded-lg text-sm">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase">Identitas Kampus / Dosen</h3>
+                    <div>
+                        <label class="block text-xs text-slate-600">Mata Kuliah</label>
+                        <input type="text" id="matkul" placeholder="Hukum Perkawinan Islam" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600">Dosen Pengampu</label>
+                        <input type="text" id="dosen" placeholder="Muhammad Al Faruq, M.H.I" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600">Penyusun (Nama / NIM)</label>
+                        <input type="text" id="penyusun" placeholder="Husni Mustofa (2531320820182)" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600">Institusi / Prodi / Tahun</label>
+                        <input type="text" id="institusi" placeholder="IAI Faqih Asy'ari Kediri - 2026" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
                 </div>
 
                 <button type="submit" id="btnSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition flex justify-center items-center gap-2 text-sm">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i> Susun Makalah Akademis AI
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    Buat Isi Makalah Otomatis
                 </button>
             </form>
 
-            <!-- CHAT REVISI AI -->
+            <!-- KOTAK CHAT REVISI AI (CHAT ASSISTANT) -->
             <div class="bg-blue-50/70 p-4 rounded-2xl border border-blue-200 space-y-3 pt-4">
-                <h3 class="text-xs font-bold text-blue-900 uppercase flex items-center gap-1.5">
-                    <i data-lucide="bot" class="w-4 h-4 text-blue-600"></i> Asisten Revisi AI
-                </h3>
-                <p class="text-[11px] text-slate-500">Minta AI memperbarui paragraf, menambah bab pembahasan, atau memperluas daftar pustaka.</p>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="bot" class="w-4 h-4 text-blue-600"></i>
+                    <h3 class="text-xs font-bold text-blue-900 uppercase">Revisi / Perintah Tambahan ke AI</h3>
+                </div>
+                
+                <p class="text-[11px] text-slate-600 leading-normal">
+                    Ingin menambah pasal, memperpanjang latar belakang, atau mengubah kalimat? Ketik instruksi Anda di bawah:
+                </p>
+
                 <div class="flex gap-2">
-                    <input type="text" id="chatPrompt" placeholder="Contoh: Tambahkan landasan hukum ayat Al-Qur'an..." class="w-full p-2.5 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-blue-500">
-                    <button type="button" onclick="reviseWithAI()" id="btnRevise" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1 shrink-0">
-                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Revisi
+                    <input type="text" id="chatPrompt" placeholder="Contoh: Tambahkan pasal 39 KHI pada Bab II..." 
+                        class="w-full p-2.5 border border-slate-300 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    
+                    <button type="button" onclick="reviseWithAI()" id="btnRevise" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-1 shrink-0">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                        Kirim
                     </button>
                 </div>
             </div>
+
         </section>
 
-        <!-- PANEL KANAN: PREVIEW LEMBAR A4 & UNDUH FILE -->
+        <!-- KANAN: Preview Lembar Kerja A4 & Tombol Unduh -->
         <section class="lg:col-span-7 flex flex-col items-center">
-            <div class="w-full max-w-[210mm] bg-white p-3 rounded-xl shadow-sm border border-slate-200 mb-4 flex justify-between items-center text-xs">
-                <span class="font-semibold text-slate-500 flex items-center gap-1.5">
-                    <i data-lucide="eye" class="w-4 h-4 text-blue-600"></i> PREVIEW LEMBAR A4
-                </span>
+            
+            <div class="w-full max-w-[210mm] bg-white p-3 rounded-xl shadow-sm border border-slate-200 mb-4 flex flex-wrap justify-between items-center gap-2 text-xs">
+                <span class="font-semibold text-slate-500">PREVIEW LEMBAR KERJA A4</span>
                 <div class="flex gap-2">
-                    <button onclick="downloadPDF()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-1 font-medium shadow-sm">
+                    <button onclick="downloadPDF()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-1 font-medium transition">
                         <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Unduh PDF
                     </button>
-                    <button onclick="downloadDOCX()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-1 font-medium shadow-sm">
+                    <button onclick="downloadDOCX()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-1 font-medium transition">
                         <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Unduh Word (.docx)
                     </button>
                 </div>
             </div>
 
-            <!-- DOKUMEN A4 -->
-            <div class="paper-a4" id="paperPreview">
-                <!-- SAMPUL / COVER -->
-                <div class="text-center flex flex-col justify-between min-h-[250mm] py-4 border-b border-dashed border-slate-300">
+            <!-- Area Kertas A4 Siap Cetak/Download -->
+            <div class="paper-a4 text-black leading-relaxed" id="paperPreview">
+                
+                <!-- COVER PAGE -->
+                <div class="text-center flex flex-col justify-between min-h-[250mm] py-6 border-b border-dashed border-slate-300">
                     <div>
-                        <h2 class="text-lg font-bold uppercase mb-2 tracking-wider" id="previewMatkul">MAKALAH</h2>
-                        <h1 class="text-xl font-bold uppercase max-w-lg mx-auto leading-snug px-4" id="previewJudul">JUDUL MAKALAH AKAN MUNCUL DI SINI</h1>
-                        <p class="text-xs mt-8 italic text-slate-700">Disusun Untuk Memenuhi Tugas Mata Kuliah</p>
-                        <p class="text-xs font-bold mt-1 text-slate-800" id="previewDosen">Dosen Pengampu: -</p>
+                        <h2 class="text-xl font-bold uppercase mb-2" id="previewMatkul">MAKALAH</h2>
+                        <h1 class="text-lg font-bold uppercase max-w-lg mx-auto leading-snug" id="previewJudul">
+                            JUDUL MAKALAH AKAN MUNCUL DI SINI
+                        </h1>
+                        <p class="text-xs mt-6 italic">Disusun Untuk Memenuhi Tugas Mata Kuliah</p>
+                        <p class="text-xs font-bold mt-1" id="previewDosen">Dosen Pengampu: -</p>
                     </div>
-                    
-                    <div class="my-10 flex justify-center">
-                        <div class="w-32 h-32 border-2 border-dashed border-slate-300 rounded-full flex items-center justify-center text-slate-400 text-xs text-center p-2">
-                            [ Logo Instansi / Kampus ]
-                        </div>
+
+                    <!-- Logo Kampus (logo.png) -->
+                    <div class="my-8 flex justify-center">
+                        <img src="logo.png" alt="Logo Kampus" class="w-28 h-28 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-28 h-28 border-2 border-dashed border-slate-300 rounded-full flex items-center justify-center text-slate-400 text-xs\'>[ Logo logo.png ]</div>';">
                     </div>
 
                     <div>
-                        <p class="text-xs font-bold mb-1">Disusun Oleh:</p>
-                        <p class="text-xs font-semibold text-slate-800" id="previewPenyusun">-</p>
+                        <p class="text-xs font-bold mb-1">Disusun oleh:</p>
+                        <p class="text-xs" id="previewPenyusun">-</p>
                     </div>
 
-                    <div class="mt-10 text-xs font-bold uppercase tracking-widest text-slate-900" id="previewInstitusi">
-                        PROGRAM STUDI HUKUM KELUARGA ISLAM<br>FAKULTAS SYARIAH<br>2026
+                    <div class="mt-8 text-xs font-bold uppercase tracking-wider" id="previewInstitusi">
+                        PROGRAM STUDI HUKUM KELUARGA ISLAM
                     </div>
                 </div>
 
-                <!-- KONTEN MAKALAH HASIL AI -->
-                <div id="aiContent" class="academic-content pt-8">
-                    <p class="text-center text-slate-400 italic no-indent">
-                        Silakan isi parameter di sebelah kiri lalu klik tombol "Susun Makalah Akademis AI" untuk menyusun isi makalah secara otomatis...
-                    </p>
+                <!-- ISI MATERI AI -->
+                <div id="aiContent" class="pt-8 space-y-6 text-justify text-sm">
+                    <p class="text-center text-slate-400 italic">Isi makalah akan dibuat secara otomatis oleh AI di sini setelah tombol "Buat Isi Makalah Otomatis" diklik...</p>
                 </div>
+
             </div>
         </section>
 
@@ -179,119 +200,164 @@
 
         function switchMode(mode) {
             activeMode = mode;
+            const btnCustom = document.getElementById('btnModeCustom');
+            const btnRPS = document.getElementById('btnModeRPS');
+            const areaCustom = document.getElementById('areaJudulCustom');
+            const areaRPS = document.getElementById('areaInputRPS');
+
             if (mode === 'custom') {
-                document.getElementById('areaJudulCustom').classList.remove('hidden');
-                document.getElementById('areaInputRPS').classList.add('hidden');
-                document.getElementById('btnModeCustom').className = "py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
-                document.getElementById('btnModeRPS').className = "py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
+                btnCustom.className = "py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
+                btnRPS.className = "py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
+                areaCustom.classList.remove('hidden');
+                areaRPS.classList.add('hidden');
             } else {
-                document.getElementById('areaInputRPS').classList.remove('hidden');
-                document.getElementById('areaJudulCustom').classList.add('hidden');
-                document.getElementById('btnModeRPS').className = "py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
-                document.getElementById('btnModeCustom').className = "py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
+                btnRPS.className = "py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
+                btnCustom.className = "py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
+                areaRPS.classList.remove('hidden');
+                areaCustom.classList.add('hidden');
             }
         }
 
-        async function callGeminiAPI(promptText) {
+        // Fungsi Penghubung Aman ke Backend /api/gemini
+        async function callGeminiBackend(promptText) {
             const res = await fetch('/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: promptText })
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Terjadi kesalahan pada AI');
+            if (!res.ok) throw new Error(data.error || 'Gagal memproses AI');
             return data.result;
         }
 
         async function generateMakalahWithAI(e) {
             e.preventDefault();
-            let topicQuery = activeMode === 'custom' ? document.getElementById('judul').value.trim() : document.getElementById('rawRps').value.trim();
-            const matkul = document.getElementById('matkul').value.trim();
-            const dosen = document.getElementById('dosen').value.trim();
-            const penyusun = document.getElementById('penyusun').value.trim();
-            const institusi = document.getElementById('institusi').value.trim();
+
+            let topicQuery = activeMode === 'custom' ? document.getElementById('judul').value : document.getElementById('rawRps').value;
+            const matkul = document.getElementById('matkul').value;
+            const dosen = document.getElementById('dosen').value;
+            const penyusun = document.getElementById('penyusun').value;
+            const institusi = document.getElementById('institusi').value;
             const btn = document.getElementById('btnSubmit');
 
-            if (!topicQuery) return alert("Harap masukkan topik judul atau materi RPS!");
+            if (!topicQuery) {
+                alert("Harap masukkan judul atau materi RPS terlebih dahulu!");
+                return;
+            }
 
-            document.getElementById('previewJudul').innerText = activeMode === 'custom' ? topicQuery : "ANALISIS MATERI SILABUS / RPS";
+            // Update Preview Cover Realtime
+            document.getElementById('previewJudul').innerText = activeMode === 'custom' ? topicQuery : "MAKALAH SILABUS / RPS";
             if(matkul) document.getElementById('previewMatkul').innerText = "MAKALAH " + matkul;
             if(dosen) document.getElementById('previewDosen').innerText = "Dosen Pengampu: " + dosen;
             if(penyusun) document.getElementById('previewPenyusun').innerText = penyusun;
             if(institusi) document.getElementById('previewInstitusi').innerText = institusi;
 
+            // Loading state
             btn.disabled = true;
-            btn.innerText = "Penyusunan AI Sedang Berjalan...";
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyusun Makalah KU...`;
+            lucide.createIcons();
 
-            const academicPrompt = `
-Buatkan makalah akademis tingkat perguruan tinggi yang komprehensif, ilmiah, dan terstruktur rapi berdasarkan:
-- Topik / Materi: ${topicQuery}
-- Mata Kuliah: ${matkul || 'Umum'}
+            const prompt = `Buatkan isi makalah akademis lengkap dalam format HTML bersih tanpa tag \`\`\`html berdasarkan parameter berikut:
+            - Topik/Materi/RPS: ${topicQuery}
+            - Mata Kuliah: ${matkul}
 
-FORMAT OUTPUT:
-1. Kembalikan HANYA teks HTML murni (tanpa markdown \`\`\`html).
-2. Struktur Wajib:
-   - KATA PENGANTAR
-   - DAFTAR ISI
-   - BAB I PENDAHULUAN (A. Latar Belakang, B. Rumusan Masalah [min. 3 poin], C. Tujuan, D. Manfaat)
-   - BAB II PEMBAHASAN (Pembahasan mendalam dan terperinci menjawab rumusan masalah)
-   - BAB III PENUTUP (A. Kesimpulan, B. Saran)
-   - DAFTAR PUSTAKA (Format APA Style, min 5 referensi)
-`;
+            Struktur Wajib:
+            1. KATA PENGANTAR
+            2. DAFTAR ISI
+            3. BAB I PENDAHULUAN (Latar Belakang, Rumusan Masalah [poin A, B, C], Tujuan Penulisan)
+            4. BAB II PEMBAHASAN (Sub-bab A, B, C yang menjawab Rumusan Masalah dengan uraian akademis yang terperinci)
+            5. BAB III PENUTUP (Kesimpulan dan Saran)
+            6. DAFTAR PUSTAKA (Minimal 4 referensi terpercaya)
+
+            Gunakan elemen HTML: <h3 class="text-center font-bold text-base my-4"> untuk Judul BAB, <h4 class="font-bold text-sm mt-3 mb-1"> untuk Sub-bab, dan <p class="indent-8 mb-2"> untuk paragraf.`;
 
             try {
-                const textResult = await callGeminiAPI(academicPrompt);
-                document.getElementById('aiContent').innerHTML = textResult.replace(/```html/g, '').replace(/```/g, '').trim();
+                const textResult = await callGeminiBackend(prompt);
+                const cleanedHtml = textResult.replace(/```html/g, '').replace(/```/g, '').trim();
+                document.getElementById('aiContent').innerHTML = cleanedHtml;
             } catch (err) {
-                alert(err.message);
+                console.error(err);
+                alert("Terjadi kesalahan saat mengubungi AI: " + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "Susun Makalah Akademis AI";
+                btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i> Buat Isi Makalah Otomatis`;
+                lucide.createIcons();
             }
         }
 
+        // FUNGSI REVISI CHAT ASSISTANT
         async function reviseWithAI() {
             const userInstruction = document.getElementById('chatPrompt').value.trim();
             const currentContent = document.getElementById('aiContent').innerHTML;
-            const btn = document.getElementById('btnRevise');
+            const btnRevise = document.getElementById('btnRevise');
 
-            if (!userInstruction) return alert("Masukkan instruksi revisi!");
+            if (!userInstruction) {
+                alert("Masukkan perintah revisi Anda terlebih dahulu!");
+                return;
+            }
 
-            btn.disabled = true;
-            btn.innerText = "...";
+            if (!currentContent || currentContent.includes("Isi makalah akan dibuat")) {
+                alert("Buat isi makalah awal terlebih dahulu sebelum melakukan revisi.");
+                return;
+            }
 
-            const revisionPrompt = `Draf HTML saat ini:\n${currentContent}\n\nInstruksi Revisi: "${userInstruction}". Perbarui HTML makalah ini dengan rapi.`;
+            btnRevise.disabled = true;
+            btnRevise.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Memproses...`;
+            lucide.createIcons();
+
+            const revisionPrompt = `Berikut adalah draf makalah HTML saat ini:
+            ---
+            ${currentContent}
+            ---
+
+            Perintah Revisi dari Pengguna:
+            "${userInstruction}"
+
+            Tugas Anda: Perbarui dan perbaiki dokumen HTML makalah di atas sesuai dengan instruksi pengguna tersebut. Tetap pertahankan format HTML bersih tanpa tag \`\`\`html. Kembalikan seluruh dokumen HTML makalah yang telah diperbarui secara utuh.`;
 
             try {
-                const updatedText = await callGeminiAPI(revisionPrompt);
-                document.getElementById('aiContent').innerHTML = updatedText.replace(/```html/g, '').replace(/```/g, '').trim();
+                const updatedText = await callGeminiBackend(revisionPrompt);
+                const cleanedHtml = updatedText.replace(/```html/g, '').replace(/```/g, '').trim();
+                document.getElementById('aiContent').innerHTML = cleanedHtml;
                 document.getElementById('chatPrompt').value = "";
+                alert("Revisi berhasil diterapkan ke lembar kerja!");
             } catch (err) {
-                alert(err.message);
+                console.error(err);
+                alert("Terjadi kesalahan saat melakukan revisi: " + err.message);
             } finally {
-                btn.disabled = false;
-                btn.innerText = "Revisi";
+                btnRevise.disabled = false;
+                btnRevise.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> Kirim`;
+                lucide.createIcons();
             }
         }
 
         function downloadPDF() {
             const element = document.getElementById('paperPreview');
-            html2pdf().set({
-                margin: [15, 15, 15, 15],
-                filename: 'Makalah_KU_Akademis.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(element).save();
+            const judul = document.getElementById('previewJudul').innerText || "Makalah KU";
+            
+            const opt = {
+                margin:       10,
+                filename:     `${judul}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
         }
 
         function downloadDOCX() {
             const content = document.getElementById('paperPreview').innerHTML;
-            const htmlHeader = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><title>Makalah KU</title><style>body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; } h1, h2 { text-align: center; font-weight: bold; text-transform: uppercase; } p { text-align: justify; text-indent: 36pt; }</style></head><body>`;
-            const converted = htmlDocx.asBlob(htmlHeader + content + "</body></html>");
+            const judul = document.getElementById('previewJudul').innerText || "Makalah KU";
+
+            const htmlHeader = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><title>Makalah KU</title><style>body { font-family: 'Times New Roman'; }</style></head><body>`;
+            const htmlFooter = "</body></html>";
+            
+            const converted = htmlDocx.asBlob(htmlHeader + content + htmlFooter);
+            
             const a = document.createElement('a');
             a.href = URL.createObjectURL(converted);
-            a.download = 'Makalah_KU_Akademis.docx';
+            a.download = `${judul}.docx`;
             a.click();
         }
     </script>
