@@ -4,14 +4,14 @@ export default async function handler(req, res) {
     }
 
     const { prompt } = req.body;
-    const geminiKey = process.env.GEMINI_API_KEY;
     const groqKey = process.env.GROQ_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
 
-    if (!geminiKey && !groqKey) {
+    if (!groqKey && !geminiKey) {
         return res.status(500).json({ error: 'API Key belum dikonfigurasi di Vercel.' });
     }
 
-    // 1. OPSI UTAMA: Panggil Groq Llama-3 (Eksekusi Super Cepat)
+    // 1. UTAMA: Panggil Groq Llama-3 (Super Cepat)
     if (groqKey) {
         try {
             const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -32,18 +32,18 @@ export default async function handler(req, res) {
             if (groqRes.ok && groqData.choices?.[0]?.message?.content) {
                 return res.status(200).json({ 
                     result: groqData.choices[0].message.content, 
-                    engine: 'Groq-Llama3 (Super Fast)' 
+                    engine: 'Groq Llama-3' 
                 });
             }
-        } catch (err) {
-            console.warn("Groq mengalami kendala, beralih ke Gemini...", err);
+        } catch (e) {
+            console.warn("Groq gagal, mencoba Gemini...", e);
         }
     }
 
-    // 2. OPSI FALLBACK: Panggil Gemini 3.8 Flash jika Groq sedang sibuk
+    // 2. CADANGAN: Gemini Flash
     if (geminiKey) {
         try {
-            const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiKey}`, {
+            const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -55,13 +55,13 @@ export default async function handler(req, res) {
             if (geminiRes.ok && geminiData.candidates?.[0]?.content?.parts?.[0]?.text) {
                 return res.status(200).json({ 
                     result: geminiData.candidates[0].content.parts[0].text, 
-                    engine: 'Gemini-3.8-Flash' 
+                    engine: 'Gemini Flash' 
                 });
             }
-        } catch (err) {
-            console.error("Gemini juga mengalami kendala.", err);
+        } catch (e) {
+            console.error("Gemini gagal...", e);
         }
     }
 
-    return res.status(500).json({ error: 'Seluruh server AI sedang padat. Silakan coba beberapa saat lagi.' });
+    return res.status(500).json({ error: 'Gagal menghubungkan ke AI. Cek API Key di Vercel.' });
 }
