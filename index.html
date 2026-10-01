@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Makalah KU - Pembuat & Asisten Makalah Otomatis</title>
+    <title>Makalah KU - Pembuat Makalah AI</title>
     
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <!-- Tailwind CSS & Lucide Icons -->
+    <!-- Tailwind CSS, Lucide Icons, & Supabase SDK -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Library Ekspor Word (.docx) & PDF -->
+    <!-- Export Libraries -->
     <script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -31,205 +34,425 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans antialiased pb-12">
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen">
 
-    <!-- Header Navbar -->
-    <header class="bg-blue-600 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <i data-lucide="book-open" class="w-6 h-6"></i>
-                <h1 class="text-xl font-bold tracking-wide">Makalah KU</h1>
-            </div>
-            <span class="text-xs bg-blue-700 px-2.5 py-1 rounded-full font-medium">Smart AI Co-Pilot</span>
-        </div>
-    </header>
+    <!-- KONFIGURASI SUPABASE -->
+    <script>
+        const SUPABASE_URL = "https://masirfan2206-web.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_1GUfCE8wZCG-emQkMKf7Fg_pnHRVBeJ"; 
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    </script>
 
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <!-- KIRI: Form Input & Setting -->
-        <section class="lg:col-span-5 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 h-fit space-y-4">
+    <!-- SECTION 1: AUTHENTICATION (LOGIN & REGISTER) -->
+    <div id="authSection" class="flex min-h-screen items-center justify-center p-4 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden p-6 md:p-8 space-y-6">
             
-            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <i data-lucide="sliders" class="w-5 h-5 text-blue-600"></i>
-                Pengaturan Makalah
-            </h2>
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg">
+                    <i data-lucide="book-open" class="w-9 h-9"></i>
+                </div>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Makalah KU</h1>
+                <p class="text-xs text-slate-500">Platform Pembuat Makalah Akademis Otomatis</p>
+            </div>
 
-            <form id="makalahForm" onsubmit="generateMakalahWithAI(event)" class="space-y-4">
-                
-                <!-- Pilihan Mode Input -->
+            <!-- Tab Switch -->
+            <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl text-xs font-bold text-center">
+                <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="py-2.5 rounded-lg bg-white shadow text-blue-600">Masuk</button>
+                <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="py-2.5 rounded-lg text-slate-500">Daftar Akun</button>
+            </div>
+
+            <!-- Alert Message -->
+            <div id="authAlert" class="hidden p-3 rounded-xl text-xs font-medium border"></div>
+
+            <!-- FORM LOGIN -->
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Mode Penyusunan</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="switchMode('custom')" id="btnModeCustom" class="py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1">
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Judul Bebas
-                        </button>
-                        <button type="button" onclick="switchMode('rps')" id="btnModeRPS" class="py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Tempel RPS / Silabus
-                        </button>
-                    </div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email</label>
+                    <input type="email" id="loginEmail" required class="w-full p-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
                 </div>
-
-                <!-- Input Judul Bebas -->
-                <div id="areaJudulCustom">
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Judul / Topik Makalah</label>
-                    <textarea id="judul" rows="2" placeholder="Contoh: Dasar Hukum Mahram dalam Perkawinan Islam"
-                        class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+                    <input type="password" id="loginPassword" required class="w-full p-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
                 </div>
-
-                <!-- Input Tempel RPS / Silabus -->
-                <div id="areaInputRPS" class="hidden">
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tempelkan Teks RPS / Indikator Pertemuan</label>
-                    <textarea id="rawRps" rows="3" placeholder="Contoh: Pertemuan 3 - Dasar hukum mahram, Wanita yang haram dinikahi, Mahram mu'abbad & mu'aqqat..."
-                        class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
-                </div>
-
-                <!-- Metadata Kampus -->
-                <div class="space-y-3 pt-2 border-t border-slate-200">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase">Identitas Kampus / Dosen</h3>
-                    <div>
-                        <label class="block text-xs text-slate-600">Mata Kuliah</label>
-                        <input type="text" id="matkul" placeholder="Hukum Perkawinan Islam" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-600">Dosen Pengampu</label>
-                        <input type="text" id="dosen" placeholder="Muhammad Al Faruq, M.H.I" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-600">Penyusun (Nama / NIM)</label>
-                        <input type="text" id="penyusun" placeholder="Husni Mustofa (2531320820182)" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-600">Institusi / Prodi / Tahun</label>
-                        <input type="text" id="institusi" placeholder="IAI Faqih Asy'ari Kediri - 2026" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
-                    </div>
-                </div>
-
-                <button type="submit" id="btnSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition flex justify-center items-center gap-2 text-sm">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                    Buat Isi Makalah Otomatis
+                <button type="submit" id="btnLoginSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-sm">
+                    Masuk ke Aplikasi
                 </button>
             </form>
 
-            <!-- KOTAK CHAT REVISI AI -->
-            <div class="bg-blue-50/70 p-4 rounded-2xl border border-blue-200 space-y-3 pt-4">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="bot" class="w-4 h-4 text-blue-600"></i>
-                    <h3 class="text-xs font-bold text-blue-900 uppercase">Revisi / Perintah Tambahan ke AI</h3>
+            <!-- FORM REGISTER -->
+            <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username</label>
+                    <input type="text" id="regUsername" required class="w-full p-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
                 </div>
-                
-                <p class="text-[11px] text-slate-600 leading-normal">
-                    Ingin menambah pasal, memperpanjang latar belakang, atau mengubah kalimat? Ketik instruksi Anda di bawah:
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Email</label>
+                    <input type="email" id="regEmail" required class="w-full p-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+                    <input type="password" id="regPassword" required minlength="6" class="w-full p-3 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" id="btnRegisterSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition text-sm">
+                    Daftar Akun Baru
+                </button>
+                <p class="text-[11px] text-slate-400 text-center">
+                    Catatan: Akun baru memerlukan verifikasi dari Admin sebelum dapat digunakan.
                 </p>
+            </form>
 
-                <div class="flex gap-2">
-                    <input type="text" id="chatPrompt" placeholder="Contoh: Tambahkan pasal 39 KHI pada Bab II..." 
-                        class="w-full p-2.5 border border-slate-300 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    
-                    <button type="button" onclick="reviseWithAI()" id="btnRevise" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-1 shrink-0">
-                        <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                        Kirim
-                    </button>
+        </div>
+    </div>
+
+    <!-- SECTION 2: MAIN DASHBOARD & ADMIN PANEL -->
+    <div id="mainDashboard" class="hidden min-h-screen pb-12">
+        
+        <!-- Navbar Header -->
+        <header class="bg-blue-600 text-white p-4 sticky top-0 z-50 shadow-md">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="book-open" class="w-7 h-7"></i>
+                    <div>
+                        <h1 class="text-base font-bold tracking-wide">Makalah KU</h1>
+                        <p class="text-[10px] text-blue-200" id="userDisplayName">Halo, User</p>
+                    </div>
                 </div>
-            </div>
-
-        </section>
-
-        <!-- KANAN: Preview Lembar Kerja A4 & Tombol Unduh -->
-        <section class="lg:col-span-7 flex flex-col items-center">
-            
-            <div class="w-full max-w-[210mm] bg-white p-3 rounded-xl shadow-sm border border-slate-200 mb-4 flex flex-wrap justify-between items-center gap-2 text-xs">
-                <span class="font-semibold text-slate-500">PREVIEW LEMBAR KERJA A4</span>
-                <div class="flex gap-2">
-                    <button onclick="downloadPDF()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-1 font-medium transition">
-                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Unduh PDF
-                    </button>
-                    <button onclick="downloadDOCX()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-1 font-medium transition">
-                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Unduh Word (.docx)
-                    </button>
-                </div>
-            </div>
-
-            <div class="paper-a4 text-black leading-relaxed" id="paperPreview">
                 
-                <!-- COVER PAGE -->
-                <div class="text-center flex flex-col justify-between min-h-[250mm] py-6 border-b border-dashed border-slate-300">
-                    <div>
-                        <h2 class="text-xl font-bold uppercase mb-2" id="previewMatkul">MAKALAH</h2>
-                        <h1 class="text-lg font-bold uppercase max-w-lg mx-auto leading-snug" id="previewJudul">
-                            JUDUL MAKALAH AKAN MUNCUL DI SINI
-                        </h1>
-                        <p class="text-xs mt-6 italic">Disusun Untuk Memenuhi Tugas Mata Kuliah</p>
-                        <p class="text-xs font-bold mt-1" id="previewDosen">Dosen Pengampu: -</p>
-                    </div>
-
-                    <!-- Logo Kampus (logo.png) -->
-                    <div class="my-8 flex justify-center">
-                        <img src="logo.png" alt="Logo Kampus" class="w-28 h-28 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-28 h-28 border-2 border-dashed border-slate-300 rounded-full flex items-center justify-center text-slate-400 text-xs\'>[ Logo logo.png ]</div>';">
-                    </div>
-
-                    <div>
-                        <p class="text-xs font-bold mb-1">Disusun oleh:</p>
-                        <p class="text-xs" id="previewPenyusun">-</p>
-                    </div>
-
-                    <div class="mt-8 text-xs font-bold uppercase tracking-wider" id="previewInstitusi">
-                        PROGRAM STUDI HUKUM KELUARGA ISLAM
-                    </div>
+                <div class="flex items-center gap-2">
+                    <button id="adminPanelBtn" onclick="toggleAdminModal()" class="hidden px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Panel Admin
+                    </button>
+                    <button onclick="handleLogout()" class="px-3 py-1.5 bg-blue-700 hover:bg-red-600 text-white rounded-lg text-xs font-medium transition flex items-center gap-1">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar
+                    </button>
                 </div>
-
-                <!-- ISI MATERI AI -->
-                <div id="aiContent" class="pt-8 space-y-6 text-justify text-sm">
-                    <p class="text-center text-slate-400 italic">Isi makalah akan dibuat secara otomatis oleh AI di sini setelah tombol "Buat Isi Makalah Otomatis" diklik...</p>
-                </div>
-
             </div>
-        </section>
+        </header>
 
-    </main>
+        <!-- Main Workspace -->
+        <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
+            <!-- KIRI: FORM & CHAT REVISI -->
+            <section class="lg:col-span-5 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 h-fit space-y-4">
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-5 h-5 text-blue-600"></i> Pengaturan Makalah
+                </h2>
+
+                <form id="makalahForm" onsubmit="generateMakalahWithAI(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Mode Penyusunan</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="switchMode('custom')" id="btnModeCustom" class="py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Judul Bebas
+                            </button>
+                            <button type="button" onclick="switchMode('rps')" id="btnModeRPS" class="py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Tempel RPS / Silabus
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="areaJudulCustom">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Judul / Topik Makalah</label>
+                        <textarea id="judul" rows="2" placeholder="Contoh: Dasar Hukum Mahram dalam Perkawinan Islam" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                    </div>
+
+                    <div id="areaInputRPS" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tempel Teks RPS / Silabus</label>
+                        <textarea id="rawRps" rows="3" placeholder="Contoh: Pertemuan 3 - Dasar hukum mahram..." class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-slate-200">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase">Identitas Kampus</h3>
+                        <input type="text" id="matkul" placeholder="Mata Kuliah" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                        <input type="text" id="dosen" placeholder="Dosen Pengampu" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                        <input type="text" id="penyusun" placeholder="Penyusun (Nama / NIM)" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                        <input type="text" id="institusi" placeholder="Institusi / Prodi / Tahun" class="w-full p-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+
+                    <button type="submit" id="btnSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition flex justify-center items-center gap-2 text-sm">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Buat Isi Makalah Otomatis
+                    </button>
+                </form>
+
+                <div class="bg-blue-50/70 p-4 rounded-2xl border border-blue-200 space-y-3 pt-4">
+                    <h3 class="text-xs font-bold text-blue-900 uppercase flex items-center gap-1.5"><i data-lucide="bot" class="w-4 h-4 text-blue-600"></i> Revisi AI</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="chatPrompt" placeholder="Instruksi revisi..." class="w-full p-2.5 border border-slate-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                        <button type="button" onclick="reviseWithAI()" id="btnRevise" class="bg-blue-600 text-white font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1 shrink-0">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i> Kirim
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KANAN: PREVIEW A4 & DOWNLOAD -->
+            <section class="lg:col-span-7 flex flex-col items-center">
+                <div class="w-full max-w-[210mm] bg-white p-3 rounded-xl shadow-sm border border-slate-200 mb-4 flex justify-between items-center text-xs">
+                    <span class="font-semibold text-slate-500">PREVIEW LEMBAR KERJA A4</span>
+                    <div class="flex gap-2">
+                        <button onclick="downloadPDF()" class="px-3 py-1.5 bg-red-600 text-white rounded-lg flex items-center gap-1 font-medium"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> PDF</button>
+                        <button onclick="downloadDOCX()" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg flex items-center gap-1 font-medium"><i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Word (.docx)</button>
+                    </div>
+                </div>
+
+                <div class="paper-a4 text-black leading-relaxed" id="paperPreview">
+                    <div class="text-center flex flex-col justify-between min-h-[250mm] py-6 border-b border-dashed border-slate-300">
+                        <div>
+                            <h2 class="text-xl font-bold uppercase mb-2" id="previewMatkul">MAKALAH</h2>
+                            <h1 class="text-lg font-bold uppercase max-w-lg mx-auto" id="previewJudul">JUDUL MAKALAH AKAN MUNCUL DI SINI</h1>
+                            <p class="text-xs mt-6 italic">Disusun Untuk Memenuhi Tugas Mata Kuliah</p>
+                            <p class="text-xs font-bold mt-1" id="previewDosen">Dosen Pengampu: -</p>
+                        </div>
+                        <div class="my-8 flex justify-center">
+                            <div class="w-28 h-28 border-2 border-dashed border-slate-300 rounded-full flex items-center justify-center text-slate-400 text-xs">[ Logo Kampus ]</div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold mb-1">Disusun oleh:</p>
+                            <p class="text-xs" id="previewPenyusun">-</p>
+                        </div>
+                        <div class="mt-8 text-xs font-bold uppercase tracking-wider" id="previewInstitusi">PROGRAM STUDI HUKUM KELUARGA ISLAM</div>
+                    </div>
+                    <div id="aiContent" class="pt-8 space-y-6 text-justify text-sm">
+                        <p class="text-center text-slate-400 italic">Isi makalah akan dibuat secara otomatis oleh AI di sini...</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL PANEL ADMIN -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-5 bg-slate-900 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shield-check" class="text-amber-400 w-5 h-5"></i>
+                    <h3 class="font-bold text-base">Panel Verifikasi Admin</h3>
+                </div>
+                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto flex-1 space-y-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 uppercase font-bold border-b">
+                                <th class="p-3">Username</th>
+                                <th class="p-3">Email</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUserTableList" class="divide-y">
+                            <!-- User rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT APPLICATION LOGIC -->
     <script>
         lucide.createIcons();
-
+        let currentUserProfile = null;
         let activeMode = 'custom';
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const regForm = document.getElementById('registerForm');
+            const tabLoginBtn = document.getElementById('tabLoginBtn');
+            const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                tabLoginBtn.className = "py-2.5 rounded-lg bg-white shadow text-blue-600";
+                tabRegisterBtn.className = "py-2.5 rounded-lg text-slate-500";
+            } else {
+                regForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                tabRegisterBtn.className = "py-2.5 rounded-lg bg-white shadow text-blue-600";
+                tabLoginBtn.className = "py-2.5 rounded-lg text-slate-500";
+            }
+        }
+
+        function showAlert(msg, isSuccess = false) {
+            const alertBox = document.getElementById('authAlert');
+            alertBox.classList.remove('hidden', 'bg-red-50', 'text-red-600', 'border-red-200', 'bg-green-50', 'text-green-600', 'border-green-200');
+            alertBox.classList.add(isSuccess ? 'bg-green-50' : 'bg-red-50', isSuccess ? 'text-green-600' : 'text-red-600', isSuccess ? 'border-green-200' : 'border-red-200');
+            alertBox.innerText = msg;
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            const btn = document.getElementById('btnRegisterSubmit');
+            btn.disabled = true;
+            btn.innerText = "Mendaftarkan...";
+
+            const { data, error } = await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: { data: { username } }
+            });
+
+            btn.disabled = false;
+            btn.innerText = "Daftar Akun Baru";
+
+            if (error) {
+                showAlert(error.message);
+            } else {
+                showAlert("Pendaftaran berhasil! Akun Anda sedang menunggu verifikasi dari Admin.", true);
+                switchAuthTab('login');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            const btn = document.getElementById('btnLoginSubmit');
+            btn.disabled = true;
+            btn.innerText = "Memeriksa Akun...";
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            btn.disabled = false;
+            btn.innerText = "Masuk ke Aplikasi";
+
+            if (error) {
+                showAlert(error.message);
+                return;
+            }
+
+            checkUserSession();
+        }
+
+        async function checkUserSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                showAuthView();
+                return;
+            }
+
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            if (!profile) {
+                showAlert("Profil akun tidak ditemukan.");
+                await supabaseClient.auth.signOut();
+                return;
+            }
+
+            if (profile.status === 'pending') {
+                showAlert("Akun Anda belum disetujui oleh Admin. Silakan tunggu verifikasi.");
+                await supabaseClient.auth.signOut();
+                return;
+            }
+
+            if (profile.status === 'disabled') {
+                showAlert("Akun Anda telah dinonaktifkan oleh Admin.");
+                await supabaseClient.auth.signOut();
+                return;
+            }
+
+            currentUserProfile = profile;
+            showDashboardView();
+        }
+
+        function showAuthView() {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('mainDashboard').classList.add('hidden');
+        }
+
+        function showDashboardView() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            document.getElementById('userDisplayName').innerText = `Halo, ${currentUserProfile.username} (${currentUserProfile.role})`;
+
+            if (currentUserProfile.role === 'admin') {
+                document.getElementById('adminPanelBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('adminPanelBtn').classList.add('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+            currentUserProfile = null;
+            showAuthView();
+        }
+
+        async function toggleAdminModal() {
+            const modal = document.getElementById('adminModal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                await loadAdminUsers();
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        async function loadAdminUsers() {
+            const { data: users } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
+            const listContainer = document.getElementById('adminUserTableList');
+            listContainer.innerHTML = '';
+
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                let badgeClass = u.status === 'active' ? 'bg-green-100 text-green-700' : (u.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700');
+                
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${u.username}</td>
+                    <td class="p-3 text-slate-500">${u.email}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${badgeClass}">${u.status.toUpperCase()}</span></td>
+                    <td class="p-3 text-right space-x-1">
+                        ${u.status !== 'active' ? `<button onclick="updateUserStatus('${u.id}', 'active')" class="px-2 py-1 bg-green-600 text-white rounded font-bold hover:bg-green-700">Terima</button>` : ''}
+                        ${u.status !== 'disabled' ? `<button onclick="updateUserStatus('${u.id}', 'disabled')" class="px-2 py-1 bg-red-600 text-white rounded font-bold hover:bg-red-700">Blokir</button>` : ''}
+                    </td>
+                `;
+                listContainer.appendChild(tr);
+            });
+        }
+
+        async function updateUserStatus(userId, status) {
+            await supabaseClient.from('profiles').update({ status }).eq('id', userId);
+            await loadAdminUsers();
+        }
 
         function switchMode(mode) {
             activeMode = mode;
-            const btnCustom = document.getElementById('btnModeCustom');
-            const btnRPS = document.getElementById('btnModeRPS');
-            const areaCustom = document.getElementById('areaJudulCustom');
-            const areaRPS = document.getElementById('areaInputRPS');
-
             if (mode === 'custom') {
-                btnCustom.className = "py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
-                btnRPS.className = "py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
-                areaCustom.classList.remove('hidden');
-                areaRPS.classList.add('hidden');
+                document.getElementById('areaJudulCustom').classList.remove('hidden');
+                document.getElementById('areaInputRPS').classList.add('hidden');
             } else {
-                btnRPS.className = "py-2 px-3 border border-blue-600 bg-blue-50 text-blue-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
-                btnCustom.className = "py-2 px-3 border border-slate-300 text-slate-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1";
-                areaRPS.classList.remove('hidden');
-                areaCustom.classList.add('hidden');
+                document.getElementById('areaInputRPS').classList.remove('hidden');
+                document.getElementById('areaJudulCustom').classList.add('hidden');
             }
         }
 
         async function callGeminiAPI(promptText) {
-            const response = await fetch('/api/gemini', {
+            const res = await fetch('/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: promptText })
             });
-
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error || 'Terjadi kesalahan sistem');
-            }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Terjadi kesalahan AI');
             return data.result;
         }
 
         async function generateMakalahWithAI(e) {
             e.preventDefault();
-
             let topicQuery = activeMode === 'custom' ? document.getElementById('judul').value : document.getElementById('rawRps').value;
             const matkul = document.getElementById('matkul').value;
             const dosen = document.getElementById('dosen').value;
@@ -237,12 +460,8 @@
             const institusi = document.getElementById('institusi').value;
             const btn = document.getElementById('btnSubmit');
 
-            if (!topicQuery) {
-                alert("Harap masukkan judul atau materi RPS terlebih dahulu!");
-                return;
-            }
+            if (!topicQuery) return alert("Harap masukkan judul atau materi RPS!");
 
-            // Update Cover
             document.getElementById('previewJudul').innerText = activeMode === 'custom' ? topicQuery : "MAKALAH SILABUS / RPS";
             if(matkul) document.getElementById('previewMatkul').innerText = "MAKALAH " + matkul;
             if(dosen) document.getElementById('previewDosen').innerText = "Dosen Pengampu: " + dosen;
@@ -250,111 +469,49 @@
             if(institusi) document.getElementById('previewInstitusi').innerText = institusi;
 
             btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menyusun Makalah KU...`;
-            lucide.createIcons();
+            btn.innerText = "Menyusun Makalah KU...";
 
-            const prompt = `Buatkan isi makalah akademis lengkap dalam format HTML bersih tanpa tag \`\`\`html berdasarkan parameter berikut:
-            - Topik/Materi/RPS: ${topicQuery}
-            - Mata Kuliah: ${matkul}
-
-            Struktur Wajib:
-            1. KATA PENGANTAR
-            2. DAFTAR ISI
-            3. BAB I PENDAHULUAN (Latar Belakang, Rumusan Masalah [poin A, B, C], Tujuan Penulisan)
-            4. BAB II PEMBAHASAN (Sub-bab A, B, C yang menjawab Rumusan Masalah dengan uraian akademis yang terperinci)
-            5. BAB III PENUTUP (Kesimpulan dan Saran)
-            6. DAFTAR PUSTAKA (Minimal 4 referensi terpercaya)
-
-            Gunakan elemen HTML: <h3 class="text-center font-bold text-base my-4"> untuk Judul BAB, <h4 class="font-bold text-sm mt-3 mb-1"> untuk Sub-bab, dan <p class="indent-8 mb-2"> untuk paragraf.`;
+            const prompt = `Buatkan isi makalah akademis lengkap dalam format HTML bersih tanpa tag \`\`\`html berdasarkan: Topik: ${topicQuery}, Matkul: ${matkul}. Include KATA PENGANTAR, DAFTAR ISI, BAB I, BAB II, BAB III, DAFTAR PUSTAKA.`;
 
             try {
                 const textResult = await callGeminiAPI(prompt);
-                const cleanedResult = textResult.replace(/```html/g, '').replace(/```/g, '');
-                document.getElementById('aiContent').innerHTML = cleanedResult;
+                document.getElementById('aiContent').innerHTML = textResult.replace(/```html/g, '').replace(/```/g, '');
             } catch (err) {
-                console.error(err);
-                alert("Gagal menyusun makalah: " + err.message);
+                alert(err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i> Buat Isi Makalah Otomatis`;
-                lucide.createIcons();
+                btn.innerText = "Buat Isi Makalah Otomatis";
             }
         }
 
         async function reviseWithAI() {
             const userInstruction = document.getElementById('chatPrompt').value.trim();
             const currentContent = document.getElementById('aiContent').innerHTML;
-            const btnRevise = document.getElementById('btnRevise');
+            if (!userInstruction) return alert("Masukkan instruksi revisi!");
 
-            if (!userInstruction) {
-                alert("Masukkan perintah revisi Anda terlebih dahulu!");
-                return;
-            }
-
-            if (!currentContent || currentContent.includes("Isi makalah akan dibuat")) {
-                alert("Buat isi makalah awal terlebih dahulu sebelum melakukan revisi.");
-                return;
-            }
-
-            btnRevise.disabled = true;
-            btnRevise.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Memproses...`;
-            lucide.createIcons();
-
-            const revisionPrompt = `Berikut adalah draf makalah HTML saat ini:
-            ---
-            ${currentContent}
-            ---
-
-            Perintah Revisi dari Pengguna:
-            "${userInstruction}"
-
-            Tugas Anda: Perbarui dan perbaiki dokumen HTML makalah di atas sesuai dengan instruksi pengguna tersebut. Tetap pertahankan format HTML bersih tanpa tag \`\`\`html. Kembalikan seluruh dokumen HTML makalah yang telah diperbarui secara utuh.`;
-
+            const prompt = `Draf saat ini:\n${currentContent}\n\nInstruksi Revisi: "${userInstruction}". Perbarui HTML makalah ini.`;
             try {
-                const updatedText = await callGeminiAPI(revisionPrompt);
-                const cleanedText = updatedText.replace(/```html/g, '').replace(/```/g, '');
-                document.getElementById('aiContent').innerHTML = cleanedText;
+                const updatedText = await callGeminiAPI(prompt);
+                document.getElementById('aiContent').innerHTML = updatedText.replace(/```html/g, '').replace(/```/g, '');
                 document.getElementById('chatPrompt').value = "";
-                alert("Revisi berhasil diterapkan ke lembar kerja!");
             } catch (err) {
-                console.error(err);
-                alert("Terjadi kesalahan koneksi saat melakukan revisi: " + err.message);
-            } finally {
-                btnRevise.disabled = false;
-                btnRevise.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i> Kirim`;
-                lucide.createIcons();
+                alert(err.message);
             }
         }
 
         function downloadPDF() {
-            const element = document.getElementById('paperPreview');
-            const judul = document.getElementById('previewJudul').innerText || "Makalah KU";
-            
-            const opt = {
-                margin:       10,
-                filename:     `${judul}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set({ margin: 10, filename: 'Makalah_KU.pdf', html2canvas: { scale: 2 } }).from(document.getElementById('paperPreview')).save();
         }
 
         function downloadDOCX() {
-            const content = document.getElementById('paperPreview').innerHTML;
-            const judul = document.getElementById('previewJudul').innerText || "Makalah KU";
-
-            const htmlHeader = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><title>Makalah KU</title><style>body { font-family: 'Times New Roman'; }</style></head><body>`;
-            const htmlFooter = "</body></html>";
-            
-            const converted = htmlDocx.asBlob(htmlHeader + content + htmlFooter);
-            
+            const converted = htmlDocx.asBlob("<html><body>" + document.getElementById('paperPreview').innerHTML + "</body></html>");
             const a = document.createElement('a');
             a.href = URL.createObjectURL(converted);
-            a.download = `${judul}.docx`;
+            a.download = 'Makalah_KU.docx';
             a.click();
         }
+
+        window.onload = checkUserSession;
     </script>
 </body>
 </html>
